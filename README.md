@@ -1,94 +1,107 @@
-# ✅ To-Do List
+# ✅ Tasks – To-Do List Web App
+### AWS Cloud Deployment Assignment
 
-A clean, modern, fully-featured **To-Do List** web application built with pure HTML, CSS, and vanilla JavaScript. No frameworks, no build tools, no dependencies — just one self-contained `index.html` file ready to deploy anywhere.
+---
 
-> **Live URL (after S3 deploy):** `http://<your-bucket-name>.s3-website-<region>.amazonaws.com`
+## 🌐 Live Website
+
+> **🔗 Live URL:** [http://todoapp-akshita-20260519.s3-website.ap-south-1.amazonaws.com](http://todoapp-akshita-20260519.s3-website.ap-south-1.amazonaws.com)
+
+---
+
+## 📌 Project Overview
+
+A simple, interactive **To-Do List** web application developed using HTML, CSS, and vanilla JavaScript, hosted as a static website on **Amazon S3**.
+
+This project was built as part of a cloud computing assignment to demonstrate:
+- Static website development using frontend web technologies
+- Cloud hosting and deployment on AWS
+- Public accessibility via a live URL
 
 ---
 
 ## 🎯 Features
 
-### Core
+### Core Features
 | Feature | Details |
 |---|---|
 | ➕ Add tasks | Input field + **Add** button |
 | ✅ Complete tasks | Custom animated checkbox |
-| 🗑️ Delete tasks | Per-task delete button with slide-out animation |
+| 🗑️ Delete tasks | Per-task delete button with animation |
 | 💾 Persistence | Tasks saved to **localStorage** — survive page refresh |
-| 📊 Live statistics | Total / Active / Completed counters update in real time |
+| 📊 Live statistics | Total / Active / Completed counters |
 | 🔍 Filter system | **All · Active · Completed** tab filters |
 | 🧹 Clear Completed | Remove all done tasks in one click |
 | ⌨️ Keyboard support | Press **Enter** to add a task |
 
-### Bonus
+### Bonus Features
 | Feature | Details |
 |---|---|
-| ✏️ Inline editing | **Double-click** any task text to edit; **Enter** saves, **Esc** cancels |
+| ✏️ Inline editing | **Double-click** any task to edit it |
 | 🎨 Animations | Slide-in on add, slide-out on delete, shake on empty submit |
-| 📱 Responsive | Single-column layout on mobile, wider card on desktop |
-| 🔒 XSS-safe | All user text is HTML-escaped before DOM insertion |
+| 📱 Responsive | Works on mobile and desktop |
+| 🔒 XSS-safe | User input is HTML-escaped before DOM insertion |
 
 ---
 
-## 🛠️ Tech Stack
+## 🛠️ Technologies Used
 
 | Technology | Purpose |
 |---|---|
-| **HTML5** | Semantic structure (`<main>`, `<nav>`, `<header>`, `<ul>`) |
-| **CSS3** | Custom properties, Flexbox, animations, responsive design |
-| **JavaScript ES6+** | DOM manipulation, localStorage, event delegation |
-| **Font Awesome 6** | Icons (CDN) |
-| **Google Fonts – Inter** | Modern typography (CDN) |
-| **AWS S3** | Static website hosting |
+| **HTML5** | Semantic page structure |
+| **CSS3** | Styling, Flexbox layout, animations, responsive design |
+| **JavaScript (ES6+)** | DOM manipulation, localStorage, event handling |
+| **Font Awesome 6** | Icons via CDN |
+| **Google Fonts – Inter** | Modern typography via CDN |
+| **Amazon S3** | Static website hosting on AWS |
 
 ---
 
 ## 🏗️ Architecture
 
 ```
-index.html          ← single deployable file
-├── <style>         ← all CSS (design tokens, components, animations)
-├── <body>          ← semantic HTML structure
-│   ├── Stats bar
-│   ├── Input card
-│   ├── Filter toolbar
-│   └── Task list (dynamically rendered)
-└── <script>        ← all JavaScript
-    ├── State        (tasks[], filter)
-    ├── Persistence  (load / save to localStorage)
-    ├── CRUD         (addTask, toggleTask, removeTask, updateText, clearCompleted)
-    ├── Render       (render, renderList, updateStats)
-    └── Event wiring (click, keydown, dblclick)
+index.html                  ← single deployable file
+├── <style>                 ← CSS (design tokens, layout, animations)
+├── <body>                  ← semantic HTML (header, stats, input, list)
+└── <script>                ← JavaScript
+    ├── State               (tasks[], filter)
+    ├── Persistence         (localStorage load/save)
+    ├── CRUD operations     (add, toggle, delete, edit, clearCompleted)
+    ├── Render functions    (renderList, updateStats)
+    └── Event listeners     (click, keydown, dblclick)
 ```
 
 ---
 
-## 🚀 AWS S3 Deployment Guide
+## 📁 Project Structure
 
-### Prerequisites
-- AWS account with S3 access
-- AWS CLI installed (optional)
+```
+PEP-assignment/
+├── index.html    ← complete web application (HTML + CSS + JS)
+└── README.md     ← this file
+```
 
-### Step-by-step
+---
 
-**1. Create an S3 bucket**
+## 🚀 AWS S3 Deployment Steps
+
+### Step 1 — Create an S3 Bucket
 ```
 AWS Console → S3 → Create bucket
-Bucket name: akshiip-todo  (must be globally unique)
-Region: choose nearest (e.g. ap-south-1 for Mumbai)
-Block all public access: UNCHECK (required for static hosting)
+Bucket name: todoapp-akshita-20260519  (globally unique)
+Region: ap-south-1 (Mumbai)
+Block all public access: UNCHECK ✓
 ```
 
-**2. Enable Static Website Hosting**
+### Step 2 — Enable Static Website Hosting
 ```
 Bucket → Properties → Static website hosting → Enable
 Index document: index.html
 Error document: index.html
 ```
 
-**3. Add a Public Bucket Policy**
-
-Go to **Permissions → Bucket Policy** and paste:
+### Step 3 — Set Public Bucket Policy
+Go to **Permissions → Bucket Policy** and add:
 ```json
 {
   "Version": "2012-10-17",
@@ -98,102 +111,51 @@ Go to **Permissions → Bucket Policy** and paste:
       "Effect": "Allow",
       "Principal": "*",
       "Action": "s3:GetObject",
-      "Resource": "arn:aws:s3:::YOUR-BUCKET-NAME/*"
+      "Resource": "arn:aws:s3:::todoapp-akshita-20260519/*"
     }
   ]
 }
 ```
-Replace `YOUR-BUCKET-NAME` with your actual bucket name.
 
-**4. Upload the file**
-
-Via Console: **Objects → Upload → Add files → index.html → Upload**
-
-Via AWS CLI:
-```bash
-aws s3 cp index.html s3://YOUR-BUCKET-NAME/index.html --acl public-read
+### Step 4 — Upload Website File
+```
+Bucket → Objects → Upload → Add files → select index.html → Upload
 ```
 
-**5. Access your app**
-
-Your URL will be:
+### Step 5 — Access the Live Website
 ```
-http://YOUR-BUCKET-NAME.s3-website-REGION.amazonaws.com
+Bucket → Properties → Static website hosting → Bucket website endpoint
 ```
-Example: `http://akshiip-todo.s3-website-ap-south-1.amazonaws.com`
+Live URL:
+```
+http://todoapp-akshita-20260519.s3-website.ap-south-1.amazonaws.com
+```
 
 ---
 
-### Optional: Add HTTPS with CloudFront
-
-1. **CloudFront → Create Distribution**
-2. Origin domain: your S3 website endpoint
-3. Viewer Protocol Policy: **Redirect HTTP to HTTPS**
-4. Default root object: `index.html`
-5. Your app will be served over HTTPS at a `*.cloudfront.net` URL
-
----
-
-## 🖥️ Run Locally
-
-No build step needed. Just open the file:
+## 🖥️ Run Locally (for testing before deployment)
 
 ```bash
-# Option 1 – open directly in browser
-start index.html          # Windows
-open index.html           # macOS
+# Option 1 — open directly in browser (Windows)
+start index.html
 
-# Option 2 – serve with Python (avoids some CORS quirks)
+# Option 2 — serve with Python
 python -m http.server 8080
-# then visit http://localhost:8080
+# Visit: http://localhost:8080
 ```
 
 ---
 
-## 📁 Project Structure
+## 📸 Deployment Screenshots
 
-```
-Akshiip/
-├── index.html    ← entire application (HTML + CSS + JS)
-└── README.md     ← this file
-```
+> Screenshots of the deployment process are submitted separately as part of the assignment report.
 
----
-
-## 🧩 Key Code Concepts
-
-### localStorage persistence
-```js
-function save() {
-  localStorage.setItem('akshiip_tasks', JSON.stringify(tasks));
-}
-function load() {
-  tasks = JSON.parse(localStorage.getItem('akshiip_tasks')) || [];
-}
-```
-
-### Inline editing (double-click)
-```js
-span.addEventListener('dblclick', () => startEdit(span, id));
-// Sets contentEditable="true", commits on blur or Enter
-```
-
-### XSS protection
-```js
-function escapeHtml(str) {
-  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;') /* ... */;
-}
-```
-
----
-
-## 📸 UI Overview
-
-- **Dark glassmorphism** theme with purple accent
-- **Stats bar** — live task counts at a glance
-- **Animated checkbox** — green fill on completion
-- **Shake animation** — red border shake on empty submit
-- **Slide animations** — tasks animate in/out of the list
+Steps captured:
+1. S3 bucket creation
+2. Static website hosting configuration
+3. Bucket policy setup
+4. File upload
+5. Live website access via public URL
 
 ---
 

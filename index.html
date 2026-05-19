@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tasks</title>
+  <meta name="description" content="A clean, modern To-Do List app with filters, localStorage persistence, and inline editing." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <style>
+    /* ─── CSS Reset & Tokens ─────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0f0f1a;
+      --surface:   #1a1a2e;
+      --card:      #16213e;
+      --border:    #2a2a4a;
+      --accent:    #7c3aed;
+      --accent2:   #a78bfa;
+      --green:     #10b981;
+      --red:       #ef4444;
+      --text:      #e2e8f0;
+      --muted:     #94a3b8;
+      --radius:    14px;
+      --shadow:    0 8px 32px rgba(0,0,0,.45);
+      --transition: .2s cubic-bezier(.4,0,.2,1);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 2rem 1rem 4rem;
+      background-image:
+        radial-gradient(ellipse 80% 50% at 20% -10%, rgba(124,58,237,.25) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 110%, rgba(167,139,250,.15) 0%, transparent 60%);
+    }
+
+    /* ─── App Container ──────────────────────────────────────── */
+    .app {
+      width: 100%;
+      max-width: 680px;
+    }
+
+    /* ─── Header ─────────────────────────────────────────────── */
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    header h1 {
+      font-size: clamp(1.8rem, 5vw, 2.6rem);
+      font-weight: 700;
+      background: linear-gradient(135deg, #a78bfa, #7c3aed, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -.02em;
+      margin-bottom: .3rem;
+    }
+    header p {
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    /* ─── Stats Bar ───────────────────────────────────────────── */
+    .stats {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+    }
+    .stat {
+      flex: 1;
+      min-width: 110px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: .75rem 1rem;
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--accent2);
+    }
+    .stat-label {
+      font-size: .72rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .07em;
+      margin-top: .15rem;
+    }
+
+    /* ─── Input Card ─────────────────────────────────────────── */
+    .input-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.25rem;
+      display: flex;
+      gap: .75rem;
+      margin-bottom: 1rem;
+      box-shadow: var(--shadow);
+    }
+    #taskInput {
+      flex: 1;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: inherit;
+      font-size: .95rem;
+      padding: .65rem 1rem;
+      outline: none;
+      transition: border-color var(--transition), box-shadow var(--transition);
+    }
+    #taskInput::placeholder { color: var(--muted); }
+    #taskInput:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(124,58,237,.2);
+    }
+    #taskInput.shake {
+      animation: shake .35s ease;
+      border-color: var(--red);
+    }
+    @keyframes shake {
+      0%,100%{ transform:translateX(0) }
+      20%    { transform:translateX(-6px) }
+      60%    { transform:translateX(6px) }
+    }
+
+    /* ─── Buttons ─────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: .4rem;
+      padding: .65rem 1.1rem;
+      border: none;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #5b21b6);
+      color: #fff;
+      box-shadow: 0 4px 15px rgba(124,58,237,.4);
+    }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(124,58,237,.55);
+    }
+    .btn-danger {
+      background: rgba(239,68,68,.15);
+      color: var(--red);
+      border: 1px solid rgba(239,68,68,.3);
+    }
+    .btn-danger:hover { background: rgba(239,68,68,.25); }
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { color: var(--text); border-color: var(--accent2); }
+
+    /* ─── Filters Row ─────────────────────────────────────────── */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+    .filters {
+      display: flex;
+      gap: .35rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: .3rem;
+      flex: 1;
+    }
+    .filter-btn {
+      flex: 1;
+      padding: .4rem .6rem;
+      border: none;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--muted);
+      font-family: inherit;
+      font-size: .82rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .filter-btn.active {
+      background: var(--accent);
+      color: #fff;
+    }
+    .filter-btn:hover:not(.active) { color: var(--text); }
+
+    /* ─── Task List ───────────────────────────────────────────── */
+    #taskList {
+      display: flex;
+      flex-direction: column;
+      gap: .55rem;
+    }
+
+    .task-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: .85rem 1rem;
+      display: flex;
+      align-items: center;
+      gap: .75rem;
+      animation: slideIn .25s ease;
+      transition: border-color var(--transition), opacity var(--transition), transform var(--transition);
+    }
+    .task-item:hover {
+      border-color: var(--accent);
+      transform: translateX(2px);
+    }
+    .task-item.done { opacity: .6; }
+    .task-item.removing {
+      animation: slideOut .2s ease forwards;
+    }
+    @keyframes slideIn {
+      from { opacity:0; transform:translateY(-8px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    @keyframes slideOut {
+      to { opacity:0; transform:translateX(20px); max-height:0; padding:0; margin:0; }
+    }
+
+    /* Custom checkbox */
+    .checkbox-wrap {
+      position: relative;
+      flex-shrink: 0;
+    }
+    .task-check {
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all var(--transition);
+      display: grid;
+      place-items: center;
+    }
+    .task-check:checked {
+      background: var(--green);
+      border-color: var(--green);
+    }
+    .task-check:checked::after {
+      content: '\f00c';
+      font-family: 'Font Awesome 6 Free';
+      font-weight: 900;
+      color: #fff;
+      font-size: .65rem;
+    }
+    .task-check:hover { border-color: var(--green); }
+
+    /* Task text */
+    .task-text {
+      flex: 1;
+      font-size: .93rem;
+      line-height: 1.4;
+      word-break: break-word;
+      cursor: default;
+      outline: none;
+    }
+    .task-item.done .task-text {
+      text-decoration: line-through;
+      color: var(--muted);
+    }
+    .task-text[contenteditable="true"] {
+      cursor: text;
+      background: var(--card);
+      border-radius: 6px;
+      padding: .2rem .5rem;
+      border: 1px solid var(--accent);
+      box-shadow: 0 0 0 3px rgba(124,58,237,.18);
+    }
+
+    /* Delete button */
+    .btn-delete {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      padding: .3rem .4rem;
+      border-radius: 7px;
+      font-size: .85rem;
+      transition: all var(--transition);
+      flex-shrink: 0;
+    }
+    .btn-delete:hover { color: var(--red); background: rgba(239,68,68,.1); }
+
+    /* ─── Empty State ─────────────────────────────────────────── */
+    .empty {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--muted);
+    }
+    .empty i { font-size: 2.5rem; margin-bottom: .75rem; opacity: .4; }
+    .empty p { font-size: .9rem; }
+
+    /* ─── Footer ─────────────────────────────────────────────── */
+    footer {
+      text-align: center;
+      margin-top: 2rem;
+      color: var(--muted);
+      font-size: .78rem;
+    }
+    footer a { color: var(--accent2); text-decoration: none; }
+
+    /* ─── Responsive ─────────────────────────────────────────── */
+    @media (max-width: 480px) {
+      .input-card { flex-wrap: wrap; }
+      #taskInput { width: 100%; }
+      #addBtn    { width: 100%; justify-content: center; }
+      .toolbar   { flex-direction: column; align-items: stretch; }
+      .btn-danger{ width: 100%; justify-content: center; }
+    }
+  </style>
+</head>
+<body>
+
+<main class="app" role="main">
+
+  <!-- Header -->
+  <header>
+    <h1><i class="fa-solid fa-check-double"></i> Tasks</h1>
+    <p>Stay organised. Double-click a task to edit it.</p>
+  </header>
+
+  <!-- Stats -->
+  <section class="stats" aria-label="Task statistics">
+    <div class="stat">
+      <div class="stat-value" id="statTotal">0</div>
+      <div class="stat-label">Total</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="statActive">0</div>
+      <div class="stat-label">Active</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="statDone">0</div>
+      <div class="stat-label">Completed</div>
+    </div>
+  </section>
+
+  <!-- Input -->
+  <div class="input-card">
+    <input
+      id="taskInput"
+      type="text"
+      placeholder="What needs to be done? (Press Enter or click Add)"
+      aria-label="New task input"
+      maxlength="200"
+      autocomplete="off"
+    />
+    <button id="addBtn" class="btn btn-primary" aria-label="Add task">
+      <i class="fa-solid fa-plus"></i> Add
+    </button>
+  </div>
+
+  <!-- Toolbar: filters + clear completed -->
+  <div class="toolbar">
+    <nav class="filters" aria-label="Filter tasks">
+      <button class="filter-btn active" data-filter="all"       id="filterAll"      >All</button>
+      <button class="filter-btn"        data-filter="active"    id="filterActive"   >Active</button>
+      <button class="filter-btn"        data-filter="completed" id="filterCompleted">Completed</button>
+    </nav>
+    <button id="clearDoneBtn" class="btn btn-danger" aria-label="Clear completed tasks">
+      <i class="fa-solid fa-trash-can"></i> Clear Done
+    </button>
+  </div>
+
+  <!-- Task list -->
+  <ul id="taskList" aria-label="Task list" role="list"></ul>
+
+</main>
+
+<footer>
+  Built with ❤️ · Hosted on <a href="https://aws.amazon.com/s3/" target="_blank" rel="noopener">AWS S3</a>
+</footer>
+
+<script>
+  /* ════════════════════════════════════════════════════════════
+     STATE
+  ════════════════════════════════════════════════════════════ */
+  const STORE_KEY = 'pep_tasks';
+  let tasks  = [];          // Array of { id, text, done }
+  let filter = 'all';       // 'all' | 'active' | 'completed'
+
+  /* ════════════════════════════════════════════════════════════
+     PERSISTENCE – load from / save to localStorage
+  ════════════════════════════════════════════════════════════ */
+  function load() {
+    try {
+      tasks = JSON.parse(localStorage.getItem(STORE_KEY)) || [];
+    } catch { tasks = []; }
+  }
+
+  function save() {
+    localStorage.setItem(STORE_KEY, JSON.stringify(tasks));
+  }
+
+  /* ════════════════════════════════════════════════════════════
+     CRUD HELPERS
+  ════════════════════════════════════════════════════════════ */
+  /** Generate a unique ID */
+  function uid() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  }
+
+  /** Add a new task */
+  function addTask(text) {
+    const trimmed = text.trim();
+    if (!trimmed) { shakeInput(); return; }
+    tasks.unshift({ id: uid(), text: trimmed, done: false });
+    save();
+    render();
+  }
+
+  /** Toggle completed state */
+  function toggleTask(id) {
+    const t = tasks.find(t => t.id === id);
+    if (t) { t.done = !t.done; save(); render(); }
+  }
+
+  /** Remove a single task (with exit animation) */
+  function removeTask(id) {
+    const el = document.querySelector(`[data-id="${id}"]`);
+    if (el) {
+      el.classList.add('removing');
+      el.addEventListener('animationend', () => {
+        tasks = tasks.filter(t => t.id !== id);
+        save();
+        render();
+      }, { once: true });
+    }
+  }
+
+  /** Update task text after inline edit */
+  function updateText(id, newText) {
+    const trimmed = newText.trim();
+    if (!trimmed) { render(); return; }   // revert if empty
+    const t = tasks.find(t => t.id === id);
+    if (t) { t.text = trimmed; save(); }
+  }
+
+  /** Remove all completed tasks */
+  function clearCompleted() {
+    tasks = tasks.filter(t => !t.done);
+    save();
+    render();
+  }
+
+  /* ════════════════════════════════════════════════════════════
+     FILTER
+  ════════════════════════════════════════════════════════════ */
+  function filteredTasks() {
+    if (filter === 'active')    return tasks.filter(t => !t.done);
+    if (filter === 'completed') return tasks.filter(t => t.done);
+    return tasks;
+  }
+
+  /* ════════════════════════════════════════════════════════════
+     RENDER
+  ════════════════════════════════════════════════════════════ */
+  function render() {
+    updateStats();
+    renderList();
+  }
+
+  /** Refresh statistics counters */
+  function updateStats() {
+    const done  = tasks.filter(t => t.done).length;
+    const total = tasks.length;
+    document.getElementById('statTotal').textContent  = total;
+    document.getElementById('statActive').textContent = total - done;
+    document.getElementById('statDone').textContent   = done;
+  }
+
+  /** Build the task list DOM */
+  function renderList() {
+    const list = document.getElementById('taskList');
+    const visible = filteredTasks();
+
+    if (visible.length === 0) {
+      list.innerHTML = `
+        <li class="empty" role="listitem">
+          <i class="fa-solid fa-inbox"></i>
+          <p>${emptyMessage()}</p>
+        </li>`;
+      return;
+    }
+
+    list.innerHTML = visible.map(t => `
+      <li class="task-item ${t.done ? 'done' : ''}" data-id="${t.id}" role="listitem">
+        <div class="checkbox-wrap">
+          <input
+            type="checkbox"
+            class="task-check"
+            id="chk-${t.id}"
+            ${t.done ? 'checked' : ''}
+            aria-label="Mark task as ${t.done ? 'incomplete' : 'complete'}"
+          />
+        </div>
+        <span
+          class="task-text"
+          title="Double-click to edit"
+          aria-label="Task: ${escapeHtml(t.text)}"
+        >${escapeHtml(t.text)}</span>
+        <button class="btn-delete" aria-label="Delete task">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </li>
+    `).join('');
+
+    /* Attach events to newly created elements */
+    list.querySelectorAll('.task-item').forEach(li => {
+      const id  = li.dataset.id;
+      const chk = li.querySelector('.task-check');
+      const txt = li.querySelector('.task-text');
+      const del = li.querySelector('.btn-delete');
+
+      /* Checkbox toggle */
+      chk.addEventListener('change', () => toggleTask(id));
+
+      /* Delete */
+      del.addEventListener('click', () => removeTask(id));
+
+      /* Double-click to edit inline */
+      txt.addEventListener('dblclick', () => startEdit(txt, id));
+    });
+  }
+
+  /** Activate inline editing for a task text element */
+  function startEdit(span, id) {
+    if (span.contentEditable === 'true') return;  // already editing
+    span.contentEditable = 'true';
+    span.focus();
+
+    // Place cursor at end
+    const range = document.createRange();
+    range.selectNodeContents(span);
+    range.collapse(false);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+
+    const commit = () => {
+      span.contentEditable = 'false';
+      updateText(id, span.textContent);
+    };
+
+    span.addEventListener('blur',    commit, { once: true });
+    span.addEventListener('keydown', e => {
+      if (e.key === 'Enter')  { e.preventDefault(); span.blur(); }
+      if (e.key === 'Escape') { span.contentEditable = 'false'; render(); }
+    });
+  }
+
+  /* ════════════════════════════════════════════════════════════
+     HELPERS
+  ════════════════════════════════════════════════════════════ */
+  function emptyMessage() {
+    if (filter === 'active')    return 'No active tasks — you&rsquo;re all caught up! 🎉';
+    if (filter === 'completed') return 'No completed tasks yet.';
+    return 'No tasks yet. Add one above!';
+  }
+
+  /** Escape HTML to prevent XSS */
+  function escapeHtml(str) {
+    return str
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  /** Shake the input to signal an error */
+  function shakeInput() {
+    const inp = document.getElementById('taskInput');
+    inp.classList.add('shake');
+    inp.addEventListener('animationend', () => inp.classList.remove('shake'), { once: true });
+  }
+
+  /* ════════════════════════════════════════════════════════════
+     EVENT WIRING
+  ════════════════════════════════════════════════════════════ */
+
+  // Add button
+  document.getElementById('addBtn').addEventListener('click', () => {
+    const inp = document.getElementById('taskInput');
+    addTask(inp.value);
+    inp.value = '';
+  });
+
+  // Enter key to add
+  document.getElementById('taskInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      const inp = e.currentTarget;
+      addTask(inp.value);
+      inp.value = '';
+    }
+  });
+
+  // Filter buttons
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      filter = btn.dataset.filter;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      render();
+    });
+  });
+
+  // Clear completed
+  document.getElementById('clearDoneBtn').addEventListener('click', clearCompleted);
+
+  /* ════════════════════════════════════════════════════════════
+     INIT
+  ════════════════════════════════════════════════════════════ */
+  load();
+  render();
+</script>
+</body>
+</html>
