@@ -1,4 +1,4 @@
-# ✅ Akshiip – To-Do List
+# ✅ To-Do List
 
 A clean, modern, fully-featured **To-Do List** web application built with pure HTML, CSS, and vanilla JavaScript. No frameworks, no build tools, no dependencies — just one self-contained `index.html` file ready to deploy anywhere.
 
